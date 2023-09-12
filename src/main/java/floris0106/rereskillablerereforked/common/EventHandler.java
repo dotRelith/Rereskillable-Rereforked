@@ -159,10 +159,15 @@ public class EventHandler
     {
         if (event.getObject() instanceof Player)
         {
-            SkillModel skillModel = new SkillModel();
-            SkillProvider provider = new SkillProvider(skillModel);
-            
-            event.addCapability(new ResourceLocation(RereskillableRereforked.MOD_ID, "cap_skills"), provider);
+            if(!event.getObject().getCapability(SkillCapability.INSTANCE).isPresent()) {
+                SkillModel skillModel = new SkillModel();
+                SkillProvider provider = new SkillProvider(skillModel);
+                event.addCapability(new ResourceLocation("rereskillable", "cap_skills"), provider);
+            }
+            /*
+            (don't know what this does, first time messing with forge)
+            event.addListener(provider::invalidate);
+            */
         }
     }
 
@@ -200,8 +205,18 @@ public class EventHandler
     @SubscribeEvent
     public void onPlayerClone(PlayerEvent.Clone event)
     {
+        /*
         SkillModel.get(event.getPlayer()).skillLevels = SkillModel.get(event.getOriginal()).skillLevels;
         event.getOriginal().getCapability(SkillCapability.INSTANCE).invalidate();
+        */
+        if(event.isWasDeath()){
+            event.getOriginal().revive();
+            event.getOriginal().getCapability(SkillCapability.INSTANCE).ifPresent(oldStore -> {
+                event.getPlayer().getCapability(SkillCapability.INSTANCE).ifPresent(newStore -> {
+                    newStore.copyFrom(oldStore);
+                });
+            });
+        }
     }
 
     @SubscribeEvent
